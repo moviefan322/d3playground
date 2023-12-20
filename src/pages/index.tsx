@@ -1,10 +1,11 @@
-import D3Example from "./components/d3Example";
-
-type Props = {
-  width: number;
-  height: number;
-};
+import D3Example from "./components/d3Example2";
+import Rectangle from "./components/rectangle";
 
 export default function Home() {
-  return <D3Example width={200} height={200} />;
+  return (
+    <>
+      <D3Example />
+      <Rectangle />
+    </>
+  );
 }
