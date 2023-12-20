@@ -1,11 +1,9 @@
-import D3Example from "./components/d3Example2";
-import Rectangle from "./components/rectangle";
+import Data from "./components/buildings";
 
 export default function Home() {
   return (
     <>
-      <D3Example />
-      <Rectangle />
+      <Data />
     </>
   );
 }
