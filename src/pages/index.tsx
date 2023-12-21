@@ -1,9 +1,9 @@
-import Data from "./components/buildings";
+import DomRange from "./components/domrange";
 
 export default function Home() {
   return (
     <>
-      <Data />
+      <DomRange />
     </>
   );
 }
