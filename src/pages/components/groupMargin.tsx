@@ -12,7 +12,7 @@ const GroupMargin = () => {
   const svgHeight = 400;
 
   useEffect(() => {
-    const MARGIN = { TOP: 100, BOTTOM: 100, LEFT: 100, RIGHT: 100 };
+    const MARGIN = { TOP: 10, BOTTOM: 130, LEFT: 100, RIGHT: 10 };
     const WIDTH = svgWidth - MARGIN.LEFT - MARGIN.RIGHT;
     const HEIGHT = svgHeight - MARGIN.TOP - MARGIN.BOTTOM;
 
@@ -25,6 +25,23 @@ const GroupMargin = () => {
     const g = svg
       .append("g")
       .attr("transform", `translate(${MARGIN.LEFT}, ${MARGIN.TOP})`);
+
+    g.append("text")
+      .attr("class", "x axis-label")
+      .attr("x", WIDTH / 2)
+      .attr("y", HEIGHT + 110)
+      .attr("font-size", "20px")
+      .attr("text-anchor", "middle")
+      .text("The world's tallest buildings");
+
+    g.append("text")
+      .attr("class", "y axis-label")
+      .attr("x", -(HEIGHT / 2))
+      .attr("y", -60)
+      .attr("font-size", "20px")
+      .attr("text-anchor", "middle")
+      .attr("transform", "rotate(-90)")
+      .text("Height (m)");
 
     d3.json<BuildingData[]>("/data/buildingsMeters.json").then((data) => {
       data!.forEach((d) => {
@@ -45,6 +62,23 @@ const GroupMargin = () => {
         .domain([0, d3.max(data!, (d) => d.height)!])
         .nice()
         .range([HEIGHT, 0]);
+
+      const xAxisCall = d3.axisBottom(x);
+      g.append("g")
+        .attr("class", "x axis")
+        .attr("transform", `translate(0, ${HEIGHT})`)
+        .call(xAxisCall)
+        .selectAll("text")
+        .attr("y", "10")
+        .attr("x", "-5")
+        .attr("text-anchor", "end")
+        .attr("transform", "rotate(-40)");
+
+      const yAxisCall = d3
+        .axisLeft(y)
+        .ticks(3)
+        .tickFormat((d) => d + "m");
+      g.append("g").attr("class", "y axis").call(yAxisCall);
 
       const color = d3
         .scaleOrdinal()
