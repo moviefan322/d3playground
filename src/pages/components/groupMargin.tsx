@@ -8,11 +8,13 @@ interface BuildingData {
 
 const GroupMargin = () => {
   const svgRef = useRef<SVGSVGElement>(null);
+  const svgWidth = 600;
+  const svgHeight = 400;
 
   useEffect(() => {
     const MARGIN = { TOP: 100, BOTTOM: 100, LEFT: 100, RIGHT: 100 };
-    const WIDTH = 600 - MARGIN.LEFT - MARGIN.RIGHT;
-    const HEIGHT = 400 - MARGIN.TOP - MARGIN.BOTTOM;
+    const WIDTH = svgWidth - MARGIN.LEFT - MARGIN.RIGHT;
+    const HEIGHT = svgHeight - MARGIN.TOP - MARGIN.BOTTOM;
 
     const svg = d3
       .select(svgRef.current)
@@ -70,7 +72,8 @@ const GroupMargin = () => {
     });
   }, []);
 
-  return <svg ref={svgRef} width={600} height={400} />;
+  // VERY IMPORTANT TO INCLUDE WIDTH AND HEIGHT IN THE SVG
+  return <svg ref={svgRef} width={svgWidth} height={svgHeight} />;
 };
 
 export default GroupMargin;
