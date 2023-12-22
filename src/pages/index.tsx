@@ -1,9 +1,8 @@
-import DomRange from "./components/domrange";
-
+import GroupMargin from "./components/groupMargin";
 export default function Home() {
   return (
     <>
-      <DomRange />
+      <GroupMargin />
     </>
   );
 }

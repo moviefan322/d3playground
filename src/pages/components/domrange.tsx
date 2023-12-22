@@ -3,7 +3,7 @@ import * as d3 from "d3";
 
 interface BuildingData {
   name: string;
-  height: string | number;
+  height: number;
 }
 
 const DomRange = () => {
@@ -20,7 +20,6 @@ const DomRange = () => {
 
   useEffect(() => {
     d3.json<BuildingData[]>("/data/buildingsMeters.json").then((data) => {
-      // Parse 'height' property as numbers
       data!.forEach((d) => {
         d.height = Number(d.height);
         d.name = d.name;
@@ -33,9 +32,10 @@ const DomRange = () => {
         .paddingInner(0.3)
         .paddingOuter(0.2);
 
-      console.log(x("Burj Khalifa"));
-
-      const y = d3.scaleLinear().domain([0, 828]).range([0, 400]);
+      const y = d3
+        .scaleLinear()
+        .domain([0, d3.max(data!, (d) => d.height)!])
+        .range([0, 400]);
 
       const svg = d3
         .select(svgRef.current)
@@ -47,19 +47,20 @@ const DomRange = () => {
       rectangles
         .enter()
         .append("rect")
-        .attr("y", 0)
-        .attr("x", (d, i) => x(d.name) || 0)
+        .attr("y", (d) => 400 - y(Number(d.height))) // Adjust position based on height
+        .attr("x", (d) => x(d.name) || 0)
         .attr("width", x.bandwidth)
         .attr("height", (d) => y(Number(d.height)))
         .attr("fill", (d, i) => colors[i]);
 
-      const textLabels = svg.selectAll("text").data(data || []);
+      // Uncomment to add text labels
+      // const textLabels = svg.selectAll("text").data(data || []);
 
       // textLabels
       //   .enter()
       //   .append("text")
       //   .text((d) => d.name)
-      //   .attr("x", (d, i) => i * 100 + 100) // Adjust x position for text
+      //   .attr("x", (d) => x(d.name) || 0)
       //   .attr("y", 140)
       //   .attr("text-anchor", "middle")
       //   .attr("fill", "black")
