@@ -34,7 +34,7 @@ const Revenues = () => {
       .attr("y", HEIGHT + 110)
       .attr("font-size", "20px")
       .attr("text-anchor", "middle")
-      .text("Months");
+      .text("Month");
 
     g.append("text")
       .attr("class", "y axis-label")
@@ -55,52 +55,69 @@ const Revenues = () => {
 
       const x = d3
         .scaleBand()
-        .domain(months)
         .range([0, WIDTH])
         .paddingInner(0.3)
         .paddingOuter(0.2);
 
-      const y = d3.scaleLinear().domain([0, max]).range([HEIGHT, 0]);
+      const y = d3.scaleLinear().range([HEIGHT, 0]);
 
-      const xAxisCall = d3.axisBottom(x);
-      g.append("g")
+      const xAxisGroup = g
+        .append("g")
         .attr("class", "x axis")
-        .attr("transform", `translate(0, ${HEIGHT})`)
-        .call(xAxisCall)
-        .selectAll("text")
-        .attr("y", "10")
-        .attr("x", "-5")
-        .attr("text-anchor", "end")
-        .attr("transform", "rotate(-40)");
+        .attr("transform", `translate(0, ${HEIGHT})`);
 
-      const yAxisCall = d3
-        .axisLeft(y)
-        .ticks(3)
-        .tickFormat((d) => d + "m");
-      g.append("g").attr("class", "y axis").call(yAxisCall);
+      const yAxisGroup = g.append("g").attr("class", "y axis");
 
-      const color = d3
-        .scaleOrdinal()
-        .domain(months)
-        .range([
-          "#c11d1d",
-          "#eae600",
-          "#7ebd01",
-          "#f68a05",
-          "#f35e9a",
-          "#481e5d",
-          "#b10d6a",
-        ]);
+      d3.interval(() => {
+        update(data);
+      }, 1000);
 
-      g.selectAll("rect")
-        .data(data)
-        .enter()
-        .append("rect")
-        .attr("x", (d) => x(d.month) || 0)
-        .attr("y", (d) => y(d.revenue) || 0)
-        .attr("width", x.bandwidth())
-        .attr("height", (d) => HEIGHT - y(d.revenue))
-        .attr("fill", (d) => color(d.month) as string);
+      const update = (data: RevenueData[]) => {
+        x.domain(months);
+        y.domain([0, max]);
+
+        const xAxisCall = d3.axisBottom(x);
+
+        xAxisGroup
+          .call(xAxisCall)
+          .selectAll("text")
+          .attr("y", "10")
+          .attr("x", "-5")
+          .attr("text-anchor", "end")
+          .attr("transform", "rotate(-40)");
+
+        const yAxisCall = d3
+          .axisLeft(y)
+          .ticks(3)
+          .tickFormat((d) => d + "m");
+
+        yAxisGroup.call(yAxisCall);
+
+        const color = d3
+          .scaleOrdinal()
+          .domain(months)
+          .range([
+            "#c11d1d",
+            "#eae600",
+            "#7ebd01",
+            "#f68a05",
+            "#f35e9a",
+            "#481e5d",
+            "#b10d6a",
+          ]);
+
+        // g.selectAll("rect")
+        //   .data(data)
+        //   .enter()
+        //   .append("rect")
+        //   .attr("x", (d) => x(d.month) || 0)
+        //   .attr("y", (d) => y(d.revenue) || 0)
+        //   .attr("width", x.bandwidth())
+        //   .attr("height", (d) => HEIGHT - y(d.revenue))
+        //   .attr("fill", (d) => color(d.month) as string);
+      };
+
+      update(data);
     });
   }, []);
 
