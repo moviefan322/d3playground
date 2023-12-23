@@ -19,6 +19,7 @@ const Revenues = () => {
   useEffect(() => {
     if (!svgRef.current) return;
 
+    // Clear all
     d3.select(svgRef.current).selectAll("*").remove();
 
     const svg = d3
@@ -56,7 +57,9 @@ const Revenues = () => {
       profit: +d.profit,
     })).then((data: RevenueData[]) => {
       const months = data.map((d) => d.month);
-      const max = d3.max(data, (d) => d.revenue)!;
+      const max = isProfit
+        ? d3.max(data, (d) => d.profit)!
+        : d3.max(data, (d) => d.revenue)!;
 
       const x = d3
         .scaleBand()
@@ -73,7 +76,11 @@ const Revenues = () => {
 
       const yAxisGroup = g.append("g").attr("class", "y axis");
 
-      const update = (data: RevenueData[]) => {
+      d3.interval(() => {
+        update(data);
+      }, 2000);
+
+      var update = (data: RevenueData[]) => {
         const value = isProfit ? "profit" : "revenue";
 
         x.domain(months);
@@ -82,6 +89,8 @@ const Revenues = () => {
         const xAxisCall = d3.axisBottom(x);
 
         xAxisGroup
+          .transition()
+          .duration(750)
           .call(xAxisCall)
           .selectAll("text")
           .attr("y", "10")
@@ -91,10 +100,10 @@ const Revenues = () => {
 
         const yAxisCall = d3
           .axisLeft(y)
-          .ticks(3)
+          .ticks(5)
           .tickFormat((d) => d + "m");
 
-        yAxisGroup.call(yAxisCall);
+        yAxisGroup.transition().duration(750).call(yAxisCall);
 
         const color = d3
           .scaleOrdinal()
@@ -113,7 +122,14 @@ const Revenues = () => {
         const rects = g.selectAll("rect").data(data);
 
         // EXIT old elements not present in new data.
-        rects.exit().remove();
+        rects
+          .exit()
+          .attr("fill", "red")
+          .transition()
+          .duration(750)
+          .attr("height", 0)
+          .attr("y", y(0))
+          .remove();
 
         // UPDATE old elements present in new data.
         rects
@@ -127,10 +143,14 @@ const Revenues = () => {
           .enter()
           .append("rect")
           .attr("x", (d) => x(d.month) || 0)
-          .attr("y", (d) => y(d[value]) || 0)
           .attr("width", x.bandwidth())
-          .attr("height", (d) => HEIGHT - y(d[value]))
-          .attr("fill", (d) => color(d.month) as string);
+          .attr("fill", (d) => color(d.month) as string)
+          .attr("y", (d) => y(0))
+          .attr("height", 0)
+          .transition()
+          .duration(750)
+          .attr("y", (d) => y(d[value]) || 0)
+          .attr("height", (d) => HEIGHT - y(d[value]));
 
         const text = isProfit ? "Profit ($)" : "Revenue ($)";
         yLabel.text(text);
@@ -138,18 +158,16 @@ const Revenues = () => {
 
       update(data);
     });
-  }, [isProfit]);
+  }, [svgRef, isProfit]);
 
-  useEffect(() => {
-    // Toggle isProfit every second
-    const interval = setInterval(() => {
-      setIsProfit((prevIsProfit) => !prevIsProfit);
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  return <svg ref={svgRef} height={svgHeight} width={svgWidth} />;
+  return (
+    <>
+      <svg ref={svgRef} height={svgHeight} width={svgWidth} />
+      <button onClick={() => setIsProfit((isProfit) => !isProfit)}>
+        Toggle
+      </button>
+    </>
+  );
 };
 
 export default Revenues;
