@@ -1,8 +1,8 @@
-import GroupMargin from "./components/groupMargin";
+import Revenues from "./components/revenues";
 export default function Home() {
   return (
     <>
-      <GroupMargin />
+      <Revenues />
     </>
   );
 }
