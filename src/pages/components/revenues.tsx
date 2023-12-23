@@ -106,15 +106,30 @@ const Revenues = () => {
             "#b10d6a",
           ]);
 
-        // g.selectAll("rect")
-        //   .data(data)
-        //   .enter()
-        //   .append("rect")
-        //   .attr("x", (d) => x(d.month) || 0)
-        //   .attr("y", (d) => y(d.revenue) || 0)
-        //   .attr("width", x.bandwidth())
-        //   .attr("height", (d) => HEIGHT - y(d.revenue))
-        //   .attr("fill", (d) => color(d.month) as string);
+        // JOIN new data with old elements.
+        const rects = g.selectAll("rect").data(data);
+
+        // EXIT old elements not present in new data.
+        rects.exit().remove();
+
+        // UPDATE old elements present in new data.
+        rects
+          .attr("x", (d) => x(d.month) || 0)
+          .attr("y", (d) => y(d.revenue) || 0)
+          .attr("width", x.bandwidth())
+          .attr("height", (d) => HEIGHT - y(d.revenue));
+
+        // ENTER new elements present in new data.
+        rects
+          .enter()
+          .append("rect")
+          .attr("x", (d) => x(d.month) || 0)
+          .attr("y", (d) => y(d.revenue) || 0)
+          .attr("width", x.bandwidth())
+          .attr("height", (d) => HEIGHT - y(d.revenue))
+          .attr("fill", (d) => color(d.month) as string);
+
+        console.log(rects);
       };
 
       update(data);
