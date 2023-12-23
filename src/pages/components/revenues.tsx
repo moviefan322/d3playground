@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import * as d3 from "d3";
 
 interface RevenueData {
@@ -9,6 +9,7 @@ interface RevenueData {
 
 const Revenues = () => {
   const svgRef = useRef<SVGSVGElement>(null);
+  const [isProfit, setIsProfit] = useState<boolean>(true); // Boolean flag state
   const svgHeight = 400;
   const svgWidth = 600;
   const MARGIN = { LEFT: 100, RIGHT: 20, TOP: 10, BOTTOM: 130 };
@@ -17,6 +18,8 @@ const Revenues = () => {
 
   useEffect(() => {
     if (!svgRef.current) return;
+
+    d3.select(svgRef.current).selectAll("*").remove();
 
     const svg = d3
       .select(svgRef.current)
@@ -28,6 +31,7 @@ const Revenues = () => {
       .append("g")
       .attr("transform", `translate(${MARGIN.LEFT}, ${MARGIN.TOP})`);
 
+    // X Label
     g.append("text")
       .attr("class", "x axis-label")
       .attr("x", WIDTH / 2)
@@ -36,14 +40,15 @@ const Revenues = () => {
       .attr("text-anchor", "middle")
       .text("Month");
 
-    g.append("text")
+    // Y Label
+    const yLabel = g
+      .append("text")
       .attr("class", "y axis-label")
       .attr("x", -(HEIGHT / 2))
       .attr("y", -60)
       .attr("font-size", "20px")
       .attr("text-anchor", "middle")
-      .attr("transform", "rotate(-90)")
-      .text("Revenues ($)");
+      .attr("transform", "rotate(-90)");
 
     d3.csv("/data/revenues.csv", (d) => ({
       month: d.month,
@@ -68,11 +73,9 @@ const Revenues = () => {
 
       const yAxisGroup = g.append("g").attr("class", "y axis");
 
-      d3.interval(() => {
-        update(data);
-      }, 1000);
-
       const update = (data: RevenueData[]) => {
+        const value = isProfit ? "profit" : "revenue";
+
         x.domain(months);
         y.domain([0, max]);
 
@@ -115,25 +118,35 @@ const Revenues = () => {
         // UPDATE old elements present in new data.
         rects
           .attr("x", (d) => x(d.month) || 0)
-          .attr("y", (d) => y(d.revenue) || 0)
+          .attr("y", (d) => y(d[value]) || 0)
           .attr("width", x.bandwidth())
-          .attr("height", (d) => HEIGHT - y(d.revenue));
+          .attr("height", (d) => HEIGHT - y(d[value]));
 
         // ENTER new elements present in new data.
         rects
           .enter()
           .append("rect")
           .attr("x", (d) => x(d.month) || 0)
-          .attr("y", (d) => y(d.revenue) || 0)
+          .attr("y", (d) => y(d[value]) || 0)
           .attr("width", x.bandwidth())
-          .attr("height", (d) => HEIGHT - y(d.revenue))
+          .attr("height", (d) => HEIGHT - y(d[value]))
           .attr("fill", (d) => color(d.month) as string);
 
-        console.log(rects);
+        const text = isProfit ? "Profit ($)" : "Revenue ($)";
+        yLabel.text(text);
       };
 
       update(data);
     });
+  }, [isProfit]);
+
+  useEffect(() => {
+    // Toggle isProfit every second
+    const interval = setInterval(() => {
+      setIsProfit((prevIsProfit) => !prevIsProfit);
+    }, 1000);
+
+    return () => clearInterval(interval);
   }, []);
 
   return <svg ref={svgRef} height={svgHeight} width={svgWidth} />;
