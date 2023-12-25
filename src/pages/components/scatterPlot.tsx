@@ -103,8 +103,17 @@ const ScatterPlot = () => {
 
       const x = d3.scaleLog([100, 150000], [0, WIDTH]);
       const y = d3.scaleLinear().domain([0, 100]).range([HEIGHT, 0]);
+      const area = d3
+        .scaleLinear()
+        .range([25 * Math.PI, 1500 * Math.PI])
+        .domain([2000, 1400000000]);
 
-      const xAxisCall = d3.axisBottom(x);
+      const continentColor = d3.scaleOrdinal(d3.schemePastel1);
+
+      const xAxisCall = d3
+        .axisBottom(x)
+        .tickValues([400, 4000, 40000])
+        .tickFormat(d3.format("$"));
       const xAxis = g
         .append("g")
         .attr("class", "x axis")
@@ -120,31 +129,20 @@ const ScatterPlot = () => {
 
       const circles = svg
         .selectAll("circle")
-        .data(currentDataSet, (d) => d.country);
+        .data(currentDataSet, (d: any) => d.country);
 
       circles.exit().remove();
 
       circles
         .enter()
         .append("circle")
+        .attr("fill", (d) => continentColor(d.continent))
         .merge(circles as any)
+        .transition()
+        .duration(100)
         .attr("cx", (d) => x(d.income))
         .attr("cy", (d) => y(d.life_exp))
-        .attr("r", (d) => Math.sqrt(d.population) / 1000)
-        .attr("fill", (d) => {
-          switch (d.continent) {
-            case "europe":
-              return "red";
-            case "asia":
-              return "green";
-            case "africa":
-              return "blue";
-            case "americas":
-              return "yellow";
-            default:
-              return "black";
-          }
-        });
+        .attr("r", (d) => Math.sqrt(area(d.population) / Math.PI));
     }
   }, [currentDataSet, data, svgHeight, svgWidth]);
 
