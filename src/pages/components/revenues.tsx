@@ -21,6 +21,23 @@ const Revenues = () => {
 
   useEffect(() => {
     if (!svgRef.current) return;
+    d3.csv("/data/revenues.csv", (d) => ({
+      month: d.month,
+      revenue: +d.revenue,
+      profit: +d.profit,
+    })).then((data: RevenueData[]) => {
+      setMonths(data.map((d) => d.month));
+      setMax(
+        isProfit
+          ? d3.max(data, (d) => d.profit)!
+          : d3.max(data, (d) => d.revenue)!
+      );
+      setData(data);
+    });
+  }, [isProfit]);
+
+  useEffect(() => {
+    if (!svgRef.current || !data.length || !months.length || !max) return;
 
     // Clear all
     d3.select(svgRef.current).selectAll("*").remove();
@@ -53,20 +70,6 @@ const Revenues = () => {
       .attr("font-size", "20px")
       .attr("text-anchor", "middle")
       .attr("transform", "rotate(-90)");
-
-    d3.csv("/data/revenues.csv", (d) => ({
-      month: d.month,
-      revenue: +d.revenue,
-      profit: +d.profit,
-    })).then((data: RevenueData[]) => {
-      setMonths(data.map((d) => d.month));
-      setMax(
-        isProfit
-          ? d3.max(data, (d) => d.profit)!
-          : d3.max(data, (d) => d.revenue)!
-      );
-      setData(data);
-    });
 
     const x = d3
       .scaleBand()
@@ -176,7 +179,7 @@ const Revenues = () => {
     };
 
     update(data);
-  }, [svgRef, isProfit, MARGIN.LEFT, MARGIN.TOP, WIDTH, HEIGHT]);
+  }, [data, months, max, isProfit, MARGIN.LEFT, MARGIN.TOP, WIDTH, HEIGHT]);
 
   return (
     <>
