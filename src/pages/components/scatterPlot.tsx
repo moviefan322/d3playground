@@ -16,7 +16,10 @@ interface GDPData {
 
 const ScatterPlot = () => {
   const svgRef = useRef<SVGSVGElement>(null);
+  const yearLabelRef = useRef<SVGTextElement>(null);
   const [data, setData] = useState<GDPData[]>([]);
+  const [year, setYear] = useState<number>(0);
+  const [index, setIndex] = useState<number>(0);
   const [currentDataSet, setCurrentDataSet] = useState<CountryData[]>();
   const svgWidth = 600;
   const svgHeight = 400;
@@ -43,9 +46,23 @@ const ScatterPlot = () => {
 
   useEffect(() => {
     if (data.length > 0) {
-      setCurrentDataSet(data[0].countries as CountryData[]);
+      setCurrentDataSet(data[index].countries as CountryData[]);
+      setYear(data[index].year);
     }
-  }, [data]);
+  }, [data, index]);
+
+  useEffect(() => {
+    if (data.length > 0) {
+      const timer = d3.interval(() => {
+        if (index < data.length - 1) {
+          setIndex(index + 1);
+        } else {
+          setIndex(0);
+        }
+      }, 100);
+      return () => timer.stop();
+    }
+  }, [data, index]);
 
   useEffect(() => {
     if (!currentDataSet) return;
@@ -54,16 +71,13 @@ const ScatterPlot = () => {
     const WIDTH = svgWidth - MARGIN.LEFT - MARGIN.RIGHT;
     const HEIGHT = svgHeight - MARGIN.TOP - MARGIN.BOTTOM;
     if (data.length > 0) {
-      const maxLife = d3.max(currentDataSet!, (d) => d.life_exp);
       const svg = d3.select(svgRef.current);
-      const g = svg
-        .append("g")
-        .attr("transform", `translate(${MARGIN.LEFT}, ${MARGIN.TOP})`);
+      const g = svg.append("g");
 
       // Update x-axis label
       g.append("text")
         .attr("class", "x axis-label")
-        .attr("x", WIDTH / 2)
+        .attr("x", WIDTH / 2 + MARGIN.LEFT)
         .attr("y", HEIGHT + 60)
         .attr("font-size", "20px")
         .attr("text-anchor", "middle")
@@ -73,49 +87,76 @@ const ScatterPlot = () => {
       g.append("text")
         .attr("class", "y axis-label")
         .attr("x", -(HEIGHT / 2))
-        .attr("y", -60)
+        .attr("y", 50)
         .attr("font-size", "20px")
         .attr("text-anchor", "middle")
         .attr("transform", "rotate(-90)")
         .text("Life Expectancy (Years)");
 
+      //Year label
+      yearLabelRef.current?.setAttribute("x", String(WIDTH));
+      yearLabelRef.current?.setAttribute("y", String(HEIGHT - 10));
+      yearLabelRef.current?.setAttribute("font-size", "40px");
+      yearLabelRef.current?.setAttribute("opacity", "0.4");
+      yearLabelRef.current?.setAttribute("text-anchor", "middle");
+      yearLabelRef.current?.setAttribute("fill", "grey");
+
       const x = d3.scaleLog([100, 150000], [0, WIDTH]);
-      const y = d3
-        .scaleLinear()
-        .domain([0, maxLife || 0])
-        .range([HEIGHT, 0]);
+      const y = d3.scaleLinear().domain([0, 100]).range([HEIGHT, 0]);
 
       const xAxisCall = d3.axisBottom(x);
-      const xAxis = svg
+      const xAxis = g
         .append("g")
         .attr("class", "x axis")
         .attr("transform", `translate(${MARGIN.LEFT}, ${HEIGHT + MARGIN.TOP})`);
       xAxis.call(xAxisCall as any);
 
       const yAxisCall = d3.axisLeft(y);
-      const yAxis = svg
+      const yAxis = g
         .append("g")
         .attr("class", "y axis")
         .attr("transform", `translate(${MARGIN.LEFT}, ${MARGIN.TOP})`);
       yAxis.call(yAxisCall as any);
+
+      const circles = svg
+        .selectAll("circle")
+        .data(currentDataSet, (d) => d.country);
+
+      circles.exit().remove();
+
+      circles
+        .enter()
+        .append("circle")
+        .merge(circles as any)
+        .attr("cx", (d) => x(d.income))
+        .attr("cy", (d) => y(d.life_exp))
+        .attr("r", (d) => Math.sqrt(d.population) / 1000)
+        .attr("fill", (d) => {
+          switch (d.continent) {
+            case "europe":
+              return "red";
+            case "asia":
+              return "green";
+            case "africa":
+              return "blue";
+            case "americas":
+              return "yellow";
+            default:
+              return "black";
+          }
+        });
     }
   }, [currentDataSet, data, svgHeight, svgWidth]);
+
+  console.log(data);
 
   if (!data.length) return <p>Loading...</p>;
 
   return (
     <>
-      <svg ref={svgRef} width={svgWidth} height={svgHeight} />
-      {data[0].countries.map((d, i) => (
-        <div key={"div" + i}>
-          <h2 key={i}>{d.country}</h2>
-          <p key={"continent" + i}>Continent: {d.continent}</p>
-          <p key={"year" + i}>Year: {data[0].year}</p>
-          <p key={"income" + i}>Income: {d.income}</p>
-          <p key={"le" + i}>Life Expectancy: {d.life_exp}</p>
-          <p key={"pop" + i}>Population: {d.population}</p>
-        </div>
-      ))}
+      <svg ref={svgRef} width={svgWidth} height={svgHeight}>
+        <text ref={yearLabelRef}>{year}</text>
+      </svg>
     </>
   );
 };
