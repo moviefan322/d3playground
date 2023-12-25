@@ -94,12 +94,16 @@ const ScatterPlot = () => {
         .text("Life Expectancy (Years)");
 
       //Year label
-      yearLabelRef.current?.setAttribute("x", String(WIDTH));
-      yearLabelRef.current?.setAttribute("y", String(HEIGHT - 10));
-      yearLabelRef.current?.setAttribute("font-size", "40px");
-      yearLabelRef.current?.setAttribute("opacity", "0.4");
-      yearLabelRef.current?.setAttribute("text-anchor", "middle");
-      yearLabelRef.current?.setAttribute("fill", "grey");
+      const yearLabel = d3
+        .select(yearLabelRef.current)
+        .attr("class", "year-label")
+        .attr("font-size", "40px")
+        .attr("opacity", "0.4")
+        .attr("text-anchor", "end")
+        .attr("fill", "grey")
+        .text(year)
+        .attr("x", svgWidth)
+        .attr("y", svgHeight - 130);
 
       const x = d3.scaleLog([100, 150000], [0, WIDTH]);
       const y = d3.scaleLinear().domain([0, 100]).range([HEIGHT, 0]);
@@ -143,6 +147,8 @@ const ScatterPlot = () => {
         .attr("cx", (d) => x(d.income))
         .attr("cy", (d) => y(d.life_exp))
         .attr("r", (d) => Math.sqrt(area(d.population) / Math.PI));
+
+      yearLabel.text(year);
     }
   }, [currentDataSet, data, svgHeight, svgWidth]);
 
