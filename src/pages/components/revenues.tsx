@@ -44,8 +44,7 @@ const Revenues = () => {
       .attr("transform", `translate(${MARGIN.LEFT}, ${MARGIN.TOP})`);
 
     // Update x-axis label
-    const xLabel = g
-      .select<SVGTextElement>(".x.axis-label")
+    g.select(".x.axis-label")
       .attr("x", WIDTH / 2)
       .attr("y", HEIGHT + 110)
       .attr("font-size", "20px")
@@ -53,12 +52,12 @@ const Revenues = () => {
       .text("Month");
 
     // Update y-axis label
-    const yLabel = g
-      .select<SVGTextElement>(".y.axis-label")
+    g.select(".y.axis-label")
       .attr("x", -(HEIGHT / 2))
-      .attr("y", -80)
+      .attr("y", -60)
       .attr("font-size", "20px")
       .attr("text-anchor", "middle")
+      .attr("transform", "rotate(-90)")
       .text(isProfit ? "Profit ($)" : "Revenue ($)");
 
     // Update x-axis
@@ -88,6 +87,7 @@ const Revenues = () => {
       .axisLeft(y)
       .ticks(5)
       .tickFormat((d) => d + "m");
+
     const yAxis = d3.select(yAxisRef.current);
     yAxis
       .transition()
@@ -108,25 +108,6 @@ const Revenues = () => {
       ]);
 
     const rects = g.selectAll("rect").data(data);
-
-    // rects
-    //   .exit()
-    //   .transition()
-    //   .duration(750)
-    //   .attr("height", 0)
-    //   .attr("y", y(0))
-    //   .remove();
-
-    // rects
-    //   .transition()
-    //   .duration(750)
-    //   .attr("x", (d) => x(d.month) || 0)
-    //   .attr("y", (d) => y(d[value]) || 0)
-    //   .attr("width", x.bandwidth())
-    //   .attr("height", (d) => HEIGHT - y(d[value]))
-    //   .attr("fill", (d) => color(d.month) as string);
-
-    yLabel.text(isProfit ? "Profit ($)" : "Revenue ($)");
 
     rects
       .enter()
