@@ -1,8 +1,8 @@
-import Revenues from "./components/revenues";
+import ScatterPlot from "./components/scatterPlot";
 export default function Home() {
   return (
     <>
-      <Revenues />
+      <ScatterPlot />
     </>
   );
 }
