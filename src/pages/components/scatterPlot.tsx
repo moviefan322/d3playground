@@ -17,12 +17,9 @@ interface GDPData {
 const ScatterPlot = () => {
   const svgRef = useRef<SVGSVGElement>(null);
   const [data, setData] = useState<GDPData[]>([]);
-
+  const [currentDataSet, setCurrentDataSet] = useState<CountryData[]>();
   const svgWidth = 600;
   const svgHeight = 400;
-  const MARGIN = { TOP: 10, BOTTOM: 130, LEFT: 130, RIGHT: 10 };
-  const WIDTH = svgWidth - MARGIN.LEFT - MARGIN.RIGHT;
-  const HEIGHT = svgHeight - MARGIN.TOP - MARGIN.BOTTOM;
 
   useEffect(() => {
     d3.json<GDPData[]>("/data/data.json").then((responseData) => {
@@ -46,35 +43,46 @@ const ScatterPlot = () => {
 
   useEffect(() => {
     if (data.length > 0) {
-      const data1800 = data[0].countries;
+      setCurrentDataSet(data[0].countries as CountryData[]);
+    }
+  }, [data]);
 
-      const maxLifeExp1800 = d3.max(data1800, (d) => d.life_exp);
+  useEffect(() => {
+    if (!currentDataSet) return;
 
+    const MARGIN = { TOP: 10, BOTTOM: 100, LEFT: 100, RIGHT: 10 };
+    const WIDTH = svgWidth - MARGIN.LEFT - MARGIN.RIGHT;
+    const HEIGHT = svgHeight - MARGIN.TOP - MARGIN.BOTTOM;
+    if (data.length > 0) {
+      const maxLife = d3.max(currentDataSet!, (d) => d.life_exp);
       const svg = d3.select(svgRef.current);
       const g = svg
         .append("g")
         .attr("transform", `translate(${MARGIN.LEFT}, ${MARGIN.TOP})`);
 
       // Update x-axis label
-      g.select(".x.axis-label")
+      g.append("text")
+        .attr("class", "x axis-label")
         .attr("x", WIDTH / 2)
-        .attr("y", HEIGHT + 110)
+        .attr("y", HEIGHT + 60)
         .attr("font-size", "20px")
         .attr("text-anchor", "middle")
         .text("GDP Per Capita ($)");
 
       // Update y-axis label
-      g.select(".y.axis-label")
+      g.append("text")
+        .attr("class", "y axis-label")
         .attr("x", -(HEIGHT / 2))
         .attr("y", -60)
         .attr("font-size", "20px")
         .attr("text-anchor", "middle")
-        .attr("transform", "rotate(-90)");
+        .attr("transform", "rotate(-90)")
+        .text("Life Expectancy (Years)");
 
       const x = d3.scaleLog([100, 150000], [0, WIDTH]);
       const y = d3
         .scaleLinear()
-        .domain([0, maxLifeExp1800 || 0])
+        .domain([0, maxLife || 0])
         .range([HEIGHT, 0]);
 
       const xAxisCall = d3.axisBottom(x);
@@ -91,24 +99,22 @@ const ScatterPlot = () => {
         .attr("transform", `translate(${MARGIN.LEFT}, ${MARGIN.TOP})`);
       yAxis.call(yAxisCall as any);
     }
-  }, [data, MARGIN, WIDTH, HEIGHT]);
-
-  console.log(data);
+  }, [currentDataSet, data, svgHeight, svgWidth]);
 
   if (!data.length) return <p>Loading...</p>;
 
   return (
     <>
       <svg ref={svgRef} width={svgWidth} height={svgHeight} />
-      {data[200].countries.map((d, i) => (
-        <>
+      {data[0].countries.map((d, i) => (
+        <div key={"div" + i}>
           <h2 key={i}>{d.country}</h2>
           <p key={"continent" + i}>Continent: {d.continent}</p>
           <p key={"year" + i}>Year: {data[0].year}</p>
           <p key={"income" + i}>Income: {d.income}</p>
           <p key={"le" + i}>Life Expectancy: {d.life_exp}</p>
           <p key={"pop" + i}>Population: {d.population}</p>
-        </>
+        </div>
       ))}
     </>
   );
