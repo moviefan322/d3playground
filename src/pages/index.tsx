@@ -1,8 +1,9 @@
-import ScatterPlot from "./components/scatterPlot";
+import LineChart from "./components/lineChart";
+
 export default function Home() {
   return (
     <>
-      <ScatterPlot />
+      <LineChart />
     </>
   );
 }
