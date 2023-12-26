@@ -24,14 +24,14 @@ const ScatterPlot = () => {
   const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipContent, setTooltipContent] = useState("");
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
-  const [filter, setFilter] = useState<String>("None");
+  const [filter, setFilter] = useState<String>("none");
   const yearLabelRef = useRef<SVGTextElement>(null);
   const [data, setData] = useState<GDPData[]>([]);
   const [year, setYear] = useState<number>(0);
   const [index, setIndex] = useState<number>(0);
   const [currentDataSet, setCurrentDataSet] = useState<CountryData[]>();
-  const svgWidth = 800;
-  const svgHeight = 500;
+  const svgWidth = 700;
+  const svgHeight = 400;
 
   useEffect(() => {
     d3.json<GDPData[]>("/data/data.json").then((responseData) => {
@@ -249,10 +249,64 @@ const ScatterPlot = () => {
   };
 
   return (
-    <>
-      <svg ref={svgRef} width={svgWidth} height={svgHeight}>
-        <text ref={yearLabelRef}>{year}</text>
-      </svg>
+    <div className={styles.container}>
+      <div className={styles.controls}>
+        <div className="d-flex flex-direction-row justify-content-center">
+          {!pausePlayback ? (
+            <button
+              className={styles.butt}
+              onClick={() => setPausePlayback(true)}
+            >
+              <FaPause />
+            </button>
+          ) : (
+            <button
+              className={styles.butt}
+              onClick={() => setPausePlayback(false)}
+            >
+              <FaPlay />
+            </button>
+          )}
+          <button className={styles.butt} onClick={() => setIndex(0)}>
+            Reset
+          </button>
+          <div className={styles.dropdown}>
+            <button
+              onClick={() => setShowDropdown((prev) => !prev)}
+              className={styles.dropbtn}
+            >
+              Filter: {filter}
+            </button>
+            {showDropdown && (
+              <div className={styles.dropdownContent}>
+                <p onClick={() => handleFilterChange("none")}>None</p>
+                <p onClick={() => handleFilterChange("europe")}>Europe</p>
+                <p onClick={() => handleFilterChange("asia")}>Asia</p>
+                <p onClick={() => handleFilterChange("americas")}>Americas</p>
+                <p onClick={() => handleFilterChange("africa")}>Africa</p>
+              </div>
+            )}
+          </div>
+        </div>
+        <div className={styles.slidecontainer}>
+          1800
+          <input
+            className={styles.slider}
+            type="range"
+            min={0}
+            max={data.length - 1}
+            value={index}
+            onChange={(e) => setIndex(parseInt(e.target.value))}
+          ></input>
+          2014
+        </div>
+      </div>
+      <div>
+        <svg ref={svgRef} width={svgWidth} height={svgHeight}>
+          <text ref={yearLabelRef}>{year}</text>
+        </svg>
+      </div>
+
       {showTooltip && (
         <div
           className={styles.tooltip}
@@ -263,56 +317,7 @@ const ScatterPlot = () => {
           dangerouslySetInnerHTML={{ __html: tooltipContent }}
         />
       )}
-      <div className={styles.slidecontainer}>
-        1800
-        <input
-          className={styles.slider}
-          type="range"
-          min={0}
-          max={data.length - 1}
-          value={index}
-          onChange={(e) => setIndex(parseInt(e.target.value))}
-        ></input>
-        2014
-      </div>
-      <div className="d-flex flex-direction-row justify-content-center">
-        {!pausePlayback ? (
-          <button
-            className={styles.butt}
-            onClick={() => setPausePlayback(true)}
-          >
-            <FaPause />
-          </button>
-        ) : (
-          <button
-            className={styles.butt}
-            onClick={() => setPausePlayback(false)}
-          >
-            <FaPlay />
-          </button>
-        )}
-        <button className={styles.butt} onClick={() => setIndex(0)}>
-          Reset
-        </button>
-        <div className={styles.dropdown}>
-          <button
-            onClick={() => setShowDropdown((prev) => !prev)}
-            className={styles.dropbtn}
-          >
-            Filter: {filter}
-          </button>
-          {showDropdown && (
-            <div className={styles.dropdownContent}>
-              <p onClick={() => handleFilterChange("none")}>None</p>
-              <p onClick={() => handleFilterChange("europe")}>Europe</p>
-              <p onClick={() => handleFilterChange("asia")}>Asia</p>
-              <p onClick={() => handleFilterChange("americas")}>Americas</p>
-              <p onClick={() => handleFilterChange("africa")}>Africa</p>
-            </div>
-          )}
-        </div>
-      </div>
-    </>
+    </div>
   );
 };
 

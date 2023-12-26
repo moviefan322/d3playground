@@ -102,3 +102,13 @@
 .show {
   display: block;
 }
+
+.container {
+  width: 100%;
+  margin: 5%;
+}
+
+.controls {
+  position: block;
+  width: 800px;
+}
