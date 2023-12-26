@@ -45,7 +45,7 @@ yAxis.append("text")
 	.attr("dy", ".71em")
 	.style("text-anchor", "end")
 	.attr("fill", "#5D6971")
-	.text("Population)")
+	.text("Price (USD)")
 
 // line path generator
 const line = d3.line()
