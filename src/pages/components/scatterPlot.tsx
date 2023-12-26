@@ -1,5 +1,7 @@
 import { useRef, useEffect, useState } from "react";
 import * as d3 from "d3";
+import { FaPause } from "react-icons/fa6";
+import { FaPlay } from "react-icons/fa";
 import styles from "./scatterPlot.module.css";
 
 interface CountryData {
@@ -17,7 +19,8 @@ interface GDPData {
 
 const ScatterPlot = () => {
   const svgRef = useRef<SVGSVGElement>(null);
-  const [showTooltip, setShowTooltip] = useState(true);
+  const [pausePlayback, setPausePlayback] = useState<boolean>(false);
+  const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipContent, setTooltipContent] = useState("");
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const yearLabelRef = useRef<SVGTextElement>(null);
@@ -64,9 +67,12 @@ const ScatterPlot = () => {
           setIndex(0);
         }
       }, 100);
+      if (pausePlayback) {
+        timer.stop();
+      }
       return () => timer.stop();
     }
-  }, [data, index]);
+  }, [data, index, pausePlayback]);
 
   useEffect(() => {
     if (!currentDataSet) return;
@@ -223,9 +229,9 @@ const ScatterPlot = () => {
     }
   }, [currentDataSet, data, svgHeight, svgWidth, year]);
 
-  console.log("showTooltip:", showTooltip);
-  console.log("tooltipContent:", tooltipContent);
-  console.log("tooltipPosition:", tooltipPosition);
+  const handlePausePlayback = () => {
+    setPausePlayback(true);
+  };
 
   if (!data.length) return <p>Loading...</p>;
 
@@ -244,6 +250,14 @@ const ScatterPlot = () => {
           dangerouslySetInnerHTML={{ __html: tooltipContent }}
         />
       )}
+      <div className="d-flex flex-direction-row justify-content-center">
+        <button onClick={() => setPausePlayback(true)}>
+          <FaPause />
+        </button>
+        <button onClick={() => setPausePlayback(false)}>
+          <FaPlay />
+        </button>
+      </div>
     </>
   );
 };
