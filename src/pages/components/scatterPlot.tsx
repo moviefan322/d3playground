@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState } from "react";
 import * as d3 from "d3";
+import styles from "./scatterPlot.module.css";
 
 interface CountryData {
   continent: string;
@@ -187,15 +188,25 @@ const ScatterPlot = () => {
           setTooltipPosition({ x, y });
           setTooltipContent(
             `<strong>Country: </strong>
-              <span style="color: red">${d.country}</span><br/>
+              <span style="color: red;text-transform:capitalize">${
+                d.country
+              }</span><br/>
               <strong>Continent: </strong>
-              <span style="color: red">${d.continent}</span><br/>
+              <span style="color: red;text-transform:capitalize">${
+                d.continent
+              }</span><br/>
               <strong>Life Expectancy: </strong>
-              <span style="color: red">${d.life_exp}</span><br/>
+              <span style="color: red">${d3.format(".2f")(
+                d.life_exp
+              )}</span><br/>
               <strong>GDP Per Capita: </strong>
-              <span style="color: red">${d.income}</span><br/>
+              <span style="color: red">${d3.format("$,.0f")(
+                d.income
+              )}</span><br/>
               <strong>Population: </strong>
-              <span style="color: red">${d.population}</span><br/>`
+              <span style="color: red">${d3.format(",.0f")(
+                d.population
+              )}</span><br/>`
           );
         })
         .on("mouseout", () => {
@@ -225,15 +236,10 @@ const ScatterPlot = () => {
       </svg>
       {showTooltip && (
         <div
+          className={styles.tooltip}
           style={{
-            position: "absolute",
-            left: `${tooltipPosition.x}px`,
-            top: `${tooltipPosition.y}px`,
-            backgroundColor: "black",
-            color: "white",
-            padding: "5px",
-            borderRadius: "5px",
-            zIndex: "9999", // Set a higher value for z-index
+            left: `${tooltipPosition.x}px`, // Adjust left position
+            top: `${tooltipPosition.y}px`, // Adjust top position
           }}
           dangerouslySetInnerHTML={{ __html: tooltipContent }}
         />

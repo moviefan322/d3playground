@@ -1,0 +1,12 @@
+.tooltip {
+  position: absolute;
+  background-color: black;
+  color: white;
+  padding: 5px;
+  border-radius: 5px;
+  z-index: 9999;
+  max-width: 300px; /* Example max-width */
+  word-break: break-word; /* Allow word wrapping */
+  height: 145px;
+  width: 220px;
+}
