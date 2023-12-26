@@ -19,10 +19,12 @@ interface GDPData {
 
 const ScatterPlot = () => {
   const svgRef = useRef<SVGSVGElement>(null);
+  const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const [pausePlayback, setPausePlayback] = useState<boolean>(true);
   const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipContent, setTooltipContent] = useState("");
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const [filter, setFilter] = useState<String>("None");
   const yearLabelRef = useRef<SVGTextElement>(null);
   const [data, setData] = useState<GDPData[]>([]);
   const [year, setYear] = useState<number>(0);
@@ -81,6 +83,16 @@ const ScatterPlot = () => {
     const WIDTH = svgWidth - MARGIN.LEFT - MARGIN.RIGHT;
     const HEIGHT = svgHeight - MARGIN.TOP - MARGIN.BOTTOM;
     const continents = ["europe", "asia", "americas", "africa"];
+
+    let filteredData: CountryData[] = [];
+    if (filter === "none") {
+      filteredData = currentDataSet;
+    } else {
+      filteredData = currentDataSet.filter(
+        (d) => d.continent === filter.toLowerCase()
+      );
+    }
+
     if (data.length > 0) {
       const svg = d3.select(svgRef.current);
       const g = svg.append("g");
@@ -180,7 +192,7 @@ const ScatterPlot = () => {
 
       const circles = svg
         .selectAll("circle")
-        .data(currentDataSet, (d: any) => d.country);
+        .data(filteredData, (d: any) => d.country);
 
       circles.exit().remove();
 
@@ -227,9 +239,14 @@ const ScatterPlot = () => {
 
       yearLabel.text(year);
     }
-  }, [currentDataSet, data, svgHeight, svgWidth, year]);
+  }, [currentDataSet, data, svgHeight, svgWidth, year, filter]);
 
   if (!data.length) return <p>Loading...</p>;
+
+  const handleFilterChange = (selection: string) => {
+    setFilter(selection);
+    setShowDropdown(false);
+  };
 
   return (
     <>
@@ -260,15 +277,40 @@ const ScatterPlot = () => {
       </div>
       <div className="d-flex flex-direction-row justify-content-center">
         {!pausePlayback ? (
-          <button onClick={() => setPausePlayback(true)}>
+          <button
+            className={styles.butt}
+            onClick={() => setPausePlayback(true)}
+          >
             <FaPause />
           </button>
         ) : (
-          <button onClick={() => setPausePlayback(false)}>
+          <button
+            className={styles.butt}
+            onClick={() => setPausePlayback(false)}
+          >
             <FaPlay />
           </button>
         )}
-        <button onClick={() => setIndex(0)}>Reset</button>
+        <button className={styles.butt} onClick={() => setIndex(0)}>
+          Reset
+        </button>
+        <div className={styles.dropdown}>
+          <button
+            onClick={() => setShowDropdown((prev) => !prev)}
+            className={styles.dropbtn}
+          >
+            Filter: {filter}
+          </button>
+          {showDropdown && (
+            <div className={styles.dropdownContent}>
+              <p onClick={() => handleFilterChange("none")}>None</p>
+              <p onClick={() => handleFilterChange("europe")}>Europe</p>
+              <p onClick={() => handleFilterChange("asia")}>Asia</p>
+              <p onClick={() => handleFilterChange("americas")}>Americas</p>
+              <p onClick={() => handleFilterChange("africa")}>Africa</p>
+            </div>
+          )}
+        </div>
       </div>
     </>
   );
