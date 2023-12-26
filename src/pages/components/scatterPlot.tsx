@@ -16,6 +16,9 @@ interface GDPData {
 
 const ScatterPlot = () => {
   const svgRef = useRef<SVGSVGElement>(null);
+  const [showTooltip, setShowTooltip] = useState(true);
+  const [tooltipContent, setTooltipContent] = useState("");
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const yearLabelRef = useRef<SVGTextElement>(null);
   const [data, setData] = useState<GDPData[]>([]);
   const [year, setYear] = useState<number>(0);
@@ -70,6 +73,7 @@ const ScatterPlot = () => {
     const MARGIN = { TOP: 10, BOTTOM: 100, LEFT: 100, RIGHT: 10 };
     const WIDTH = svgWidth - MARGIN.LEFT - MARGIN.RIGHT;
     const HEIGHT = svgHeight - MARGIN.TOP - MARGIN.BOTTOM;
+    const continents = ["europe", "asia", "americas", "africa"];
     if (data.length > 0) {
       const svg = d3.select(svgRef.current);
       const g = svg.append("g");
@@ -131,6 +135,42 @@ const ScatterPlot = () => {
         .attr("transform", `translate(${MARGIN.LEFT}, ${MARGIN.TOP})`);
       yAxis.call(yAxisCall as any);
 
+      const legend = g
+        .append("g")
+        .attr("transform", `translate(${WIDTH - 10}, ${HEIGHT - 125})`);
+
+      legend
+        .append("rect")
+        .attr("width", 100)
+        .attr("height", 80)
+        .attr("x", -80)
+        .attr("y", -6)
+        .style("stroke", "black")
+        .style("stroke-width", 1)
+        .style("fill", "#ffe6f2");
+
+      continents.forEach((continent, i) => {
+        const legendRow = legend
+          .append("g")
+          .attr("transform", `translate(0, ${i * 20})`)
+          .style("border", "5px solid black");
+
+        legendRow
+          .append("rect")
+          .attr("width", 10)
+          .attr("height", 10)
+          .attr("stroke", "black")
+          .attr("fill", continentColor(continent));
+
+        legendRow
+          .append("text")
+          .attr("x", -10)
+          .attr("y", 10)
+          .attr("text-anchor", "end")
+          .style("text-transform", "capitalize")
+          .text(continent);
+      });
+
       const circles = svg
         .selectAll("circle")
         .data(currentDataSet, (d: any) => d.country);
@@ -141,6 +181,26 @@ const ScatterPlot = () => {
         .enter()
         .append("circle")
         .attr("fill", (d) => continentColor(d.continent))
+        .on("mouseover", (event, d) => {
+          setShowTooltip(true);
+          const [x, y] = d3.pointer(event);
+          setTooltipPosition({ x, y });
+          setTooltipContent(
+            `<strong>Country: </strong>
+              <span style="color: red">${d.country}</span><br/>
+              <strong>Continent: </strong>
+              <span style="color: red">${d.continent}</span><br/>
+              <strong>Life Expectancy: </strong>
+              <span style="color: red">${d.life_exp}</span><br/>
+              <strong>GDP Per Capita: </strong>
+              <span style="color: red">${d.income}</span><br/>
+              <strong>Population: </strong>
+              <span style="color: red">${d.population}</span><br/>`
+          );
+        })
+        .on("mouseout", () => {
+          setShowTooltip(false);
+        })
         .merge(circles as any)
         .transition()
         .duration(100)
@@ -150,9 +210,11 @@ const ScatterPlot = () => {
 
       yearLabel.text(year);
     }
-  }, [currentDataSet, data, svgHeight, svgWidth]);
+  }, [currentDataSet, data, svgHeight, svgWidth, year]);
 
-  console.log(data);
+  console.log("showTooltip:", showTooltip);
+  console.log("tooltipContent:", tooltipContent);
+  console.log("tooltipPosition:", tooltipPosition);
 
   if (!data.length) return <p>Loading...</p>;
 
@@ -161,6 +223,21 @@ const ScatterPlot = () => {
       <svg ref={svgRef} width={svgWidth} height={svgHeight}>
         <text ref={yearLabelRef}>{year}</text>
       </svg>
+      {showTooltip && (
+        <div
+          style={{
+            position: "absolute",
+            left: `${tooltipPosition.x}px`,
+            top: `${tooltipPosition.y}px`,
+            backgroundColor: "black",
+            color: "white",
+            padding: "5px",
+            borderRadius: "5px",
+            zIndex: "9999", // Set a higher value for z-index
+          }}
+          dangerouslySetInnerHTML={{ __html: tooltipContent }}
+        />
+      )}
     </>
   );
 };
