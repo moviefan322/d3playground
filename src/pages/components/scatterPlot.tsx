@@ -19,7 +19,7 @@ interface GDPData {
 
 const ScatterPlot = () => {
   const svgRef = useRef<SVGSVGElement>(null);
-  const [pausePlayback, setPausePlayback] = useState<boolean>(false);
+  const [pausePlayback, setPausePlayback] = useState<boolean>(true);
   const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipContent, setTooltipContent] = useState("");
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
@@ -28,8 +28,8 @@ const ScatterPlot = () => {
   const [year, setYear] = useState<number>(0);
   const [index, setIndex] = useState<number>(0);
   const [currentDataSet, setCurrentDataSet] = useState<CountryData[]>();
-  const svgWidth = 600;
-  const svgHeight = 400;
+  const svgWidth = 800;
+  const svgHeight = 500;
 
   useEffect(() => {
     d3.json<GDPData[]>("/data/data.json").then((responseData) => {
@@ -229,10 +229,6 @@ const ScatterPlot = () => {
     }
   }, [currentDataSet, data, svgHeight, svgWidth, year]);
 
-  const handlePausePlayback = () => {
-    setPausePlayback(true);
-  };
-
   if (!data.length) return <p>Loading...</p>;
 
   return (
@@ -250,13 +246,29 @@ const ScatterPlot = () => {
           dangerouslySetInnerHTML={{ __html: tooltipContent }}
         />
       )}
+      <div className={styles.slidecontainer}>
+        1800
+        <input
+          className={styles.slider}
+          type="range"
+          min={0}
+          max={data.length - 1}
+          value={index}
+          onChange={(e) => setIndex(parseInt(e.target.value))}
+        ></input>
+        2014
+      </div>
       <div className="d-flex flex-direction-row justify-content-center">
-        <button onClick={() => setPausePlayback(true)}>
-          <FaPause />
-        </button>
-        <button onClick={() => setPausePlayback(false)}>
-          <FaPlay />
-        </button>
+        {!pausePlayback ? (
+          <button onClick={() => setPausePlayback(true)}>
+            <FaPause />
+          </button>
+        ) : (
+          <button onClick={() => setPausePlayback(false)}>
+            <FaPlay />
+          </button>
+        )}
+        <button onClick={() => setIndex(0)}>Reset</button>
       </div>
     </>
   );
