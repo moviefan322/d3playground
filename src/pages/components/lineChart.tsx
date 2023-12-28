@@ -15,11 +15,12 @@ interface CoinData {
 const LineChart = () => {
   const svgRef = useRef<SVGSVGElement>(null);
   const [data, setData] = useState<CoinList>();
+  const [selectedCoin, setSelectedCoin] = useState<string>("bitcoin");
   const svgWidth = 800;
   const svgHeight = 500;
   const parseDate = (dateString: string): Date | null => {
-    const [day, month, year] = dateString.split("/");
-    return new Date(Number(year), Number(month) - 1, Number(day));
+    const [year, month, day] = dateString.split("-").map(Number);
+    return new Date(year, month - 1, day);
   };
   const bisectDate = d3.bisector((d) => (d as any).year).left;
 
@@ -91,12 +92,16 @@ const LineChart = () => {
       .y((d) => (d.price_usd ? y(+d.price_usd) : 0));
 
     if (data?.bitcoin) {
-      const coinDataArray = data.bitcoin;
+      const coinDataArray = data[selectedCoin];
+      console.log(coinDataArray);
+
+      const sanitizedCoinDataArray = coinDataArray.filter((data) => {
+        return data.price_usd !== null && data.date !== null;
+      });
+      console.log(sanitizedCoinDataArray);
 
       x.domain(
-        d3.extent(coinDataArray, (d) =>
-          d.date ? new Date(d.date) : new Date()
-        ) as [Date, Date]
+        d3.extent(sanitizedCoinDataArray, (d) => d.date) as unknown as [Date]
       );
 
       y.domain([
@@ -117,10 +122,8 @@ const LineChart = () => {
       .attr("class", "line")
       .attr("fill", "none")
       .attr("stroke", "grey")
-      .attr("stroke-width", "3px")
-      // .attr("d", line(data as unknown as CoinData[]));
-
-    console.log(data);
+      .attr("stroke-width", "3px");
+    // .attr("d", line(data as unknown as CoinData[]));
 
     /******************************** Tooltip Code ********************************/
 
