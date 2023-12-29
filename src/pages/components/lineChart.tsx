@@ -6,36 +6,34 @@ interface CoinList {
 }
 
 interface CoinData {
-  vol_24h: string | null;
-  date: string;
-  market_cap: string | null;
-  price_usd: string | null;
+  vol_24h: number | null;
+  date: any;
+  market_cap: number | null;
+  price_usd: number | null;
 }
 
 const LineChart = () => {
   const svgRef = useRef<SVGSVGElement>(null);
-  const [data, setData] = useState<CoinList>();
+  const [data, setData] = useState<CoinData[]>();
   const [selectedCoin, setSelectedCoin] = useState<string>("bitcoin");
   const svgWidth = 800;
-  const svgHeight = 500;
+  const svgHeight = 600;
   const parseDate = (dateString: string): Date | null => {
-    const [year, month, day] = dateString.split("-").map(Number);
+    const [day, month, year] = dateString.split("/").map(Number);
     return new Date(year, month - 1, day);
   };
   const bisectDate = d3.bisector((d) => (d as any).year).left;
 
   useEffect(() => {
-    d3.json("data/coins.json").then((coinData: any) => {
-      const parsedCoinData = coinData as CoinList;
+    d3.json<CoinList>("data/coins.json").then((coinData: any) => {
+      console.log(coinData[selectedCoin]);
+      const parsedCoinData = coinData[selectedCoin] as CoinData[];
 
-      Object.keys(coinData).forEach((coinKey) => {
-        parsedCoinData[coinKey] = coinData[coinKey].map((coin: CoinData) => ({
-          ...coin,
-          date: coin.date ? parseDate(coin.date) : null,
-          vol_24h: coin.vol_24h ? +coin.vol_24h : null,
-          market_cap: coin.market_cap ? +coin.market_cap : null,
-          price_usd: coin.price_usd ? +coin.price_usd : null,
-        }));
+      parsedCoinData.forEach((d) => {
+        d.date = parseDate(d.date);
+        d.price_usd = d.price_usd ? +d.price_usd : null;
+        d.market_cap = d.market_cap ? +d.market_cap : null;
+        d.vol_24h = d.vol_24h ? +d.vol_24h : null;
       });
 
       setData(parsedCoinData);
@@ -88,70 +86,80 @@ const LineChart = () => {
     // line path generator
     const line = d3
       .line<CoinData>()
-      .x((d) => (d.date ? x(+d.date) : 0))
+      .x((d) => (d.date ? x(d.date! as Date | any) : 0)) // Adjust here
       .y((d) => (d.price_usd ? y(+d.price_usd) : 0));
 
-    if (data?.bitcoin) {
-      const coinDataArray = data[selectedCoin];
-      console.log(coinDataArray);
+    if (data) {
+      const coinDataArray = data;
 
-      const sanitizedCoinDataArray = coinDataArray.filter((data) => {
-        return data.price_usd !== null && data.date !== null;
-      });
-      console.log(sanitizedCoinDataArray);
-
-      x.domain(
-        d3.extent(sanitizedCoinDataArray, (d) => d.date) as unknown as [Date]
+      const sanitizedCoinDataArray = coinDataArray.filter(
+        (data) => data.price_usd !== null && data.date !== null
       );
 
-      y.domain([
-        d3.min(coinDataArray, (d) =>
-          d.price_usd ? +d.price_usd! : Infinity
-        )! / 1.005,
-        d3.max(coinDataArray, (d) => (d.price_usd ? +d.price_usd! : 0))! *
-          1.005,
-      ]);
+      console.log(data);
+
+      // Ensure sanitizedCoinDataArray has at least one valid data point
+      if (sanitizedCoinDataArray.length > 0) {
+        x.domain([
+          d3.min(sanitizedCoinDataArray, (d) => d.date as unknown as Date)!, // Ensure the date type is Date here
+          d3.max(sanitizedCoinDataArray, (d) => d.date as unknown as Date)!,
+        ]).nice();
+
+        y.domain([
+          d3.min(sanitizedCoinDataArray, (d) =>
+            d.price_usd ? +d.price_usd! : Infinity
+          )! / 1.005,
+          d3.max(sanitizedCoinDataArray, (d) =>
+            d.price_usd ? +d.price_usd! : 0
+          )! * 1.005,
+        ]);
+
+        // Generate axes once scales have been set
+        xAxis.call(xAxisCall.scale(x));
+        yAxis.call(yAxisCall.scale(y));
+
+        const line = d3
+          .line<CoinData>()
+          .x((d) => (d.date ? x(d.date as unknown as Date) : 0))
+          .y((d) => (d.price_usd ? y(+d.price_usd) : 0));
+
+        // Add line to chart
+        g.append("path")
+          .attr("class", "line")
+          .attr("fill", "none")
+          .attr("stroke", "grey")
+          .attr("stroke-width", "3px")
+          .attr("d", line(sanitizedCoinDataArray)); // Pass sanitized data here
+      }
     }
-
-    // generate axes once scales have been set
-    xAxis.call(xAxisCall.scale(x));
-    yAxis.call(yAxisCall.scale(y));
-
-    // add line to chart
-    g.append("path")
-      .attr("class", "line")
-      .attr("fill", "none")
-      .attr("stroke", "grey")
-      .attr("stroke-width", "3px");
-    // .attr("d", line(data as unknown as CoinData[]));
 
     /******************************** Tooltip Code ********************************/
 
-    const focus = g.append("g").attr("class", "focus").style("display", "none");
+    // const focus = g.append("g").attr("class", "focus").style("display", "none");
 
-    focus
-      .append("line")
-      .attr("class", "x-hover-line hover-line")
-      .attr("y1", 0)
-      .attr("y2", HEIGHT);
+    // focus
+    //   .append("line")
+    //   .attr("class", "x-hover-line hover-line")
+    //   .attr("y1", 0)
+    //   .attr("y2", HEIGHT);
 
-    focus
-      .append("line")
-      .attr("class", "y-hover-line hover-line")
-      .attr("x1", 0)
-      .attr("x2", WIDTH);
+    // focus
+    //   .append("line")
+    //   .attr("class", "y-hover-line hover-line")
+    //   .attr("x1", 0)
+    //   .attr("x2", WIDTH);
 
-    focus.append("circle").attr("r", 7.5);
+    // focus.append("circle").attr("r", 7.5);
 
-    focus.append("text").attr("x", 15).attr("dy", ".31em");
+    // focus.append("text").attr("x", 15).attr("dy", ".31em");
 
-    g.append("rect")
-      .attr("class", "overlay")
-      .attr("width", WIDTH)
-      .attr("height", HEIGHT)
-      .on("mouseover", () => focus.style("display", null))
-      .on("mouseout", () => focus.style("display", "none"))
-      .on("mousemove", (event) => {});
+    // g.append("rect")
+    //   .attr("class", "overlay")
+    //   .attr("width", WIDTH)
+    //   .attr("height", HEIGHT)
+    //   .on("mouseover", () => focus.style("display", null))
+    //   .on("mouseout", () => focus.style("display", "none"))
+    //   .on("mousemove", (event) => {});
 
     // function mousemove() {
     //   const x0 = x.invert(d3.mouse(this)[0]);
@@ -167,7 +175,7 @@ const LineChart = () => {
   }, [data]);
 
   if (!data) return <div>Loading...</div>;
-  console.log(data);
+  // console.log(data);
 
   return <svg ref={svgRef} width={svgWidth} height={svgHeight}></svg>;
 };
