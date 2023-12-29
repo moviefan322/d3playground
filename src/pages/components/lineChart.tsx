@@ -38,7 +38,7 @@ const LineChart = () => {
 
       setData(parsedCoinData);
     });
-  }, []);
+  }, [selectedCoin]);
 
   useEffect(() => {
     const MARGIN = { LEFT: 20, RIGHT: 100, TOP: 50, BOTTOM: 100 };
@@ -47,8 +47,8 @@ const LineChart = () => {
     const svg = d3
       .select(svgRef.current)
       .append("svg")
-      .attr("width", WIDTH)
-      .attr("height", HEIGHT);
+      .attr("width", svgWidth)
+      .attr("height", svgHeight);
 
     const g = svg
       .append("g")
