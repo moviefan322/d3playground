@@ -14,6 +14,9 @@ interface CoinData {
 
 const LineChart = () => {
   const svgRef = useRef<SVGSVGElement>(null);
+  const focusRef = useRef<SVGGElement>(null);
+  const circleRef = useRef<SVGLineElement>(null);
+  const textRef = useRef<SVGTextElement>(null);
   const [data, setData] = useState<CoinData[]>();
   const [selectedCoin, setSelectedCoin] = useState<string>("bitcoin");
   const svgWidth = 800;
@@ -135,49 +138,76 @@ const LineChart = () => {
 
     /******************************** Tooltip Code ********************************/
 
-    // const focus = g.append("g").attr("class", "focus").style("display", "none");
+    const focus = d3.select(focusRef.current); // Select the tooltip group
 
-    // focus
-    //   .append("line")
-    //   .attr("class", "x-hover-line hover-line")
-    //   .attr("y1", 0)
-    //   .attr("y2", HEIGHT);
+    focus
+      .append("line")
+      .attr("class", "x-hover-line hover-line")
+      .attr("y1", 0)
+      .attr("y2", HEIGHT);
 
-    // focus
-    //   .append("line")
-    //   .attr("class", "y-hover-line hover-line")
-    //   .attr("x1", 0)
-    //   .attr("x2", WIDTH);
+    focus
+      .append("line")
+      .attr("class", "y-hover-line hover-line")
+      .attr("x1", 0)
+      .attr("x2", WIDTH);
 
-    // focus.append("circle").attr("r", 7.5);
+    focus
+      .append("circle")
+      .attr("r", 7.5)
+      .attr("class", "circle")
+      .style("display", "none"); // Initially hide the circle
 
-    // focus.append("text").attr("x", 15).attr("dy", ".31em");
+    focus
+      .append("text")
+      .attr("x", 15)
+      .attr("dy", ".31em")
+      .attr("class", "tooltip-text")
+      .style("display", "none"); // Initially hide the text
 
-    // g.append("rect")
-    //   .attr("class", "overlay")
-    //   .attr("width", WIDTH)
-    //   .attr("height", HEIGHT)
-    //   .on("mouseover", () => focus.style("display", null))
-    //   .on("mouseout", () => focus.style("display", "none"))
-    //   .on("mousemove", (event) => {});
+    const overlay = d3
+      .select(svgRef.current)
+      .append("rect")
+      .attr("class", "overlay");
 
-    // function mousemove() {
-    //   const x0 = x.invert(d3.mouse(this)[0]);
-    //   const i = bisectDate(data as any, x0, 1);
-    //   const d0 = data![i - 1];
-    //   const d1 = data![i];
-    //   const d = x0 - d0.date > d1.date - x0 ? d1 : d0;
-    //   focus.attr("transform", `translate(${x(d.date)}, ${y(d.price_usd)})`);
-    //   focus.select("text").text(d.price_usd);
-    //   focus.select(".x-hover-line").attr("y2", HEIGHT - y(d.price_usd));
-    //   focus.select(".y-hover-line").attr("x2", -x(d.date));
-    // }
-  }, [data]);
+    overlay
+      .attr("width", WIDTH)
+      .attr("height", HEIGHT)
+      .style("fill", "none")
+      .on("mouseover", () => {
+        focus.selectAll(".circle, .tooltip-text").style("display", "block");
+      })
+      .on("mouseout", () => {
+        focus.selectAll(".circle, .tooltip-text").style("display", "none");
+      })
+      .on("mousemove", (event) => {
+        mousemove(event);
+      });
+
+    function mousemove(event: any) {
+      const [x0, y0] = d3.pointer(event); // Get mouse coordinates relative to the SVG
+
+      const invertedX: any = x.invert(x0); // Invert x coordinate to get the corresponding date
+      const i = bisectDate(data as any, invertedX, 1);
+
+      const d0 = data![i - 1];
+      const d1 = data![i];
+      const d =
+        invertedX - (d0?.date ?? 0) > (d1?.date ?? 0) - invertedX ? d1 : d0;
+
+      focus.attr("transform", `translate(${x(d.date)}, ${y(d.price_usd!)})`);
+      d3.select(circleRef.current).attr("transform", "translate(0, 0)");
+      d3.select(textRef.current).text(`Price: ${d.price_usd} USD`);
+    }
+  }, [bisectDate, data]);
 
   if (!data) return <div>Loading...</div>;
-  // console.log(data);
 
-  return <svg ref={svgRef} width={svgWidth} height={svgHeight}></svg>;
+  return (
+    <svg ref={svgRef} width={svgWidth} height={svgHeight}>
+      <g ref={focusRef} className="focus"></g>
+    </svg>
+  );
 };
 
 export default LineChart;
