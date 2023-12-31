@@ -195,23 +195,45 @@ const LineChart = () => {
     function mousemove(event: any) {
       const [x0, y0] = d3.pointer(event);
 
-      const invertedX: any = x.invert(x0);
-      const i = bisectDate(data as any, invertedX, 1);
+      // Reversing the scaled coordinates back to data values
+      const invertedX = x.invert(x0);
 
-      const d0 = data![i - 1];
-      const d1 = data![i];
-      const d =
-        invertedX - (d0?.date ?? 0) > (d1?.date ?? 0) - invertedX ? d1 : d0;
+      // Find the nearest data point based on invertedX
+      const closestDataPoint = findNearestDataPoint(+invertedX);
 
-      const tooltipX = x(d.date);
-      const tooltipY = y(d.price_usd!);
+      // Set tooltip data based on the found data point
+      if (closestDataPoint) {
+        setTooltipData({
+          display: true,
+          x: x(closestDataPoint.date),
+          y: y(closestDataPoint.price_usd!),
+          content: `Price: ${closestDataPoint.price_usd} USD`,
+        });
+      } else {
+        setTooltipData({
+          display: false,
+        });
+      }
+    }
 
-      setTooltipData({
-        display: true,
-        x: tooltipX,
-        y: tooltipY,
-        content: `Price: ${d.price_usd} USD`,
-      });
+    function findNearestDataPoint(targetX: number): CoinData | undefined {
+      let closestDataPoint: CoinData | undefined;
+      let minDistanceSquared = Number.MAX_VALUE;
+
+      if (data) {
+        data.forEach((d) => {
+          if (d.date && d.price_usd !== null) {
+            const distanceSquared = (x(d.date) - targetX) ** 2;
+
+            if (distanceSquared < minDistanceSquared) {
+              minDistanceSquared = distanceSquared;
+              closestDataPoint = d;
+            }
+          }
+        });
+      }
+
+      return closestDataPoint;
     }
   }, [bisectDate, data, tooltipData]);
 
@@ -228,14 +250,20 @@ const LineChart = () => {
               className="circle"
               r={7.5}
               transform={`translate(${tooltipData.x}, ${tooltipData.y})`}
-              style={{ display: tooltipData.display ? "block" : "none" }}
+              style={{
+                display: tooltipData.display ? "block" : "none",
+                zIndex: 1000,
+              }}
             />
             <text
               x={tooltipData.x ? tooltipData.x + 15 : 0}
               y={tooltipData.y ? tooltipData.y : 0}
               dy=".31em"
               className="tooltip-text"
-              style={{ display: tooltipData.display ? "block" : "none" }}
+              style={{
+                display: tooltipData.display ? "block" : "none",
+                zIndex: 1000,
+              }}
             >
               {tooltipData.content}
             </text>
