@@ -17,6 +17,17 @@ const LineChart = () => {
   const focusRef = useRef<SVGGElement>(null);
   const circleRef = useRef<SVGLineElement>(null);
   const textRef = useRef<SVGTextElement>(null);
+  const [tooltipData, setTooltipData] = useState<{
+    display: boolean;
+    x?: number;
+    y?: number;
+    content?: string;
+  }>({
+    display: false,
+    x: 0,
+    y: 0,
+    content: "",
+  });
   const [data, setData] = useState<CoinData[]>();
   const [selectedCoin, setSelectedCoin] = useState<string>("bitcoin");
   const svgWidth = 800;
@@ -99,8 +110,6 @@ const LineChart = () => {
         (data) => data.price_usd !== null && data.date !== null
       );
 
-      console.log(data);
-
       // Ensure sanitizedCoinDataArray has at least one valid data point
       if (sanitizedCoinDataArray.length > 0) {
         x.domain([
@@ -168,26 +177,25 @@ const LineChart = () => {
     const overlay = d3
       .select(svgRef.current)
       .append("rect")
-      .attr("class", "overlay");
-
-    overlay
-      .attr("width", WIDTH)
-      .attr("height", HEIGHT)
+      .attr("class", "overlay")
+      .attr("width", svgWidth) // Set the overlay width to cover the entire chart
+      .attr("height", svgHeight) // Set the overlay height to cover the entire chart
       .style("fill", "none")
+      .style("pointer-events", "all") // Ensure the overlay captures mouse events
       .on("mouseover", () => {
-        focus.selectAll(".circle, .tooltip-text").style("display", "block");
+        setTooltipData({ ...tooltipData, display: true });
       })
       .on("mouseout", () => {
-        focus.selectAll(".circle, .tooltip-text").style("display", "none");
+        setTooltipData({ ...tooltipData, display: false });
       })
       .on("mousemove", (event) => {
         mousemove(event);
       });
 
     function mousemove(event: any) {
-      const [x0, y0] = d3.pointer(event); // Get mouse coordinates relative to the SVG
+      const [x0, y0] = d3.pointer(event);
 
-      const invertedX: any = x.invert(x0); // Invert x coordinate to get the corresponding date
+      const invertedX: any = x.invert(x0);
       const i = bisectDate(data as any, invertedX, 1);
 
       const d0 = data![i - 1];
@@ -195,17 +203,45 @@ const LineChart = () => {
       const d =
         invertedX - (d0?.date ?? 0) > (d1?.date ?? 0) - invertedX ? d1 : d0;
 
-      focus.attr("transform", `translate(${x(d.date)}, ${y(d.price_usd!)})`);
-      d3.select(circleRef.current).attr("transform", "translate(0, 0)");
-      d3.select(textRef.current).text(`Price: ${d.price_usd} USD`);
+      const tooltipX = x(d.date);
+      const tooltipY = y(d.price_usd!);
+
+      setTooltipData({
+        display: true,
+        x: tooltipX,
+        y: tooltipY,
+        content: `Price: ${d.price_usd} USD`,
+      });
     }
-  }, [bisectDate, data]);
+  }, [bisectDate, data, tooltipData]);
+
+  console.log(tooltipData);
 
   if (!data) return <div>Loading...</div>;
 
   return (
     <svg ref={svgRef} width={svgWidth} height={svgHeight}>
-      <g ref={focusRef} className="focus"></g>
+      <g ref={focusRef} className="focus">
+        {tooltipData.display && (
+          <>
+            <circle
+              className="circle"
+              r={7.5}
+              transform={`translate(${tooltipData.x}, ${tooltipData.y})`}
+              style={{ display: tooltipData.display ? "block" : "none" }}
+            />
+            <text
+              x={tooltipData.x ? tooltipData.x + 15 : 0}
+              y={tooltipData.y ? tooltipData.y : 0}
+              dy=".31em"
+              className="tooltip-text"
+              style={{ display: tooltipData.display ? "block" : "none" }}
+            >
+              {tooltipData.content}
+            </text>
+          </>
+        )}
+      </g>
     </svg>
   );
 };
