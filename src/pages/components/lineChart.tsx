@@ -192,8 +192,9 @@ const LineChart = () => {
         mousemove(event);
       });
 
+    // Inside the mousemove function
     function mousemove(event: any) {
-      const [x0, y0] = d3.pointer(event);
+      const [x0] = d3.pointer(event);
 
       // Reversing the scaled coordinates back to data values
       const invertedX = x.invert(x0);
@@ -205,7 +206,7 @@ const LineChart = () => {
       if (closestDataPoint) {
         setTooltipData({
           display: true,
-          x: x(closestDataPoint.date),
+          x: x(closestDataPoint.date as Date),
           y: y(closestDataPoint.price_usd!),
           content: `Price: ${closestDataPoint.price_usd} USD`,
         });
@@ -216,24 +217,25 @@ const LineChart = () => {
       }
     }
 
+    // Inside the findNearestDataPoint function
     function findNearestDataPoint(targetX: number): CoinData | undefined {
-      let closestDataPoint: CoinData | undefined;
-      let minDistanceSquared = Number.MAX_VALUE;
-
       if (data) {
-        data.forEach((d) => {
-          if (d.date && d.price_usd !== null) {
-            const distanceSquared = (x(d.date) - targetX) ** 2;
+        const index = d3.bisectLeft(
+          data.map((d) => d.date),
+          targetX
+        );
+        const leftDataPoint = data[Math.max(index - 1, 0)];
+        const rightDataPoint = data[Math.min(index, data.length - 1)];
 
-            if (distanceSquared < minDistanceSquared) {
-              minDistanceSquared = distanceSquared;
-              closestDataPoint = d;
-            }
-          }
-        });
+        // Determine the closest data point by comparing x-values
+        if (leftDataPoint && rightDataPoint) {
+          return targetX - leftDataPoint.date > rightDataPoint.date - targetX
+            ? rightDataPoint
+            : leftDataPoint;
+        }
       }
 
-      return closestDataPoint;
+      return undefined;
     }
   }, [bisectDate, data, tooltipData]);
 
@@ -249,7 +251,8 @@ const LineChart = () => {
             <circle
               className="circle"
               r={7.5}
-              transform={`translate(${tooltipData.x}, ${tooltipData.y})`}
+              cx={tooltipData.x}
+              cy={tooltipData.y}
               style={{
                 display: tooltipData.display ? "block" : "none",
                 zIndex: 1000,
