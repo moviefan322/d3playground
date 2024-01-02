@@ -193,6 +193,7 @@ const LineChart = () => {
       });
 
     // Inside the mousemove function
+    // Inside the mousemove function
     function mousemove(event: any) {
       const [x0] = d3.pointer(event);
 
@@ -206,8 +207,8 @@ const LineChart = () => {
       if (closestDataPoint) {
         setTooltipData({
           display: true,
-          x: x(closestDataPoint.date as Date),
-          y: y(closestDataPoint.price_usd!),
+          x: x0, // Use mouse x-coordinate directly
+          y: y(closestDataPoint.price_usd!) + 30,
           content: `Price: ${closestDataPoint.price_usd} USD`,
         });
       } else {
