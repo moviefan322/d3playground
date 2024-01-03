@@ -19,7 +19,7 @@ interface TweetData {
   user: string;
   verifiedStatus: string;
   views: number;
-  date: string;
+  date: Date;
   media: string;
 }
 
@@ -49,7 +49,7 @@ const Candidates = () => {
         url: tweet.URL,
         user: tweet.User,
         verifiedStatus: tweet["Verified status"],
-        date: tweet.date,
+        date: new Date(Date.parse(tweet.date)),
         media: tweet.media,
       }));
 
@@ -74,6 +74,31 @@ const Candidates = () => {
     // scales
     const x = d3.scaleTime().range([0, WIDTH]);
     const y = d3.scaleLinear().range([HEIGHT, 0]);
+
+    // axis generators
+    const xAxisCall = d3.axisBottom(x);
+    const yAxisCall = d3
+      .axisLeft(y)
+      .ticks(6)
+      .tickFormat((d) => `${+((d as any) / 1000)}k`);
+
+    // axis groups
+    const xAxis = g
+      .append("g")
+      .attr("class", "x axis")
+      .attr("transform", `translate(0, ${HEIGHT})`);
+    const yAxis = g.append("g").attr("class", "y axis");
+
+    // y-axis label
+    yAxis
+      .append("text")
+      .attr("class", "axis-title")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 6)
+      .attr("dy", ".71em")
+      .style("text-anchor", "end")
+      .attr("fill", "#5D6971")
+      .text("# of tweets");
   }, [data]);
 
   if (!data) {
