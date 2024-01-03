@@ -28,7 +28,6 @@ interface NegativeTweets {
     date: Date;
     tweets: TweetData[];
     count: number;
-    dateInt: number | undefined;
   };
 }
 
@@ -70,33 +69,21 @@ const Candidates = () => {
   useEffect(() => {
     if (data) {
       const negativeTweetsByDate: NegativeTweets = {};
-      const dateMap = new Map<string, number>(); // Map to store dates and corresponding indices
 
       data.forEach((tweet) => {
         if (tweet.negativeSentiment > 62) {
-          const tweetDate = tweet.date.toISOString().slice(0, 10); // Format date as "YYYY-MM-DD"
+          const tweetDate = tweet.date.toISOString().slice(0, 10);
           if (!negativeTweetsByDate[tweetDate]) {
             negativeTweetsByDate[tweetDate] = {
               date: new Date(tweetDate),
               tweets: [],
               count: 0,
-              dateInt: 0,
             };
-            dateMap.set(tweetDate, dateMap.size); // Store the date and its index in the map
           }
           negativeTweetsByDate[tweetDate].tweets.push(tweet);
           negativeTweetsByDate[tweetDate].count =
             negativeTweetsByDate[tweetDate].tweets.length;
         }
-      });
-
-      const sortedEntries = Object.values(negativeTweetsByDate).sort((a, b) => {
-        // Sort entries by date
-        return a.date.getTime() - b.date.getTime();
-      });
-
-      sortedEntries.forEach((tweet, index) => {
-        tweet.dateInt = index;
       });
 
       setNegativeTweets(negativeTweetsByDate);
@@ -115,7 +102,7 @@ const Candidates = () => {
       .append("g")
       .attr("transform", `translate(${MARGIN.LEFT}, ${MARGIN.TOP})`);
 
-    const x = d3.scaleTime().range([0, WIDTH]); // Use time scale for x-axis
+    const x = d3.scaleTime().range([0, WIDTH]);
     const y = d3.scaleLinear().range([HEIGHT, 0]);
 
     const xAxisCall = d3.axisBottom(x);
@@ -124,7 +111,7 @@ const Candidates = () => {
     const dates = data.map((entry) => entry.date);
     const count = data.map((entry) => entry.count);
 
-    x.domain(d3.extent(dates) as [Date, Date]); // Set x-domain to the range of dates
+    x.domain(d3.extent(dates) as [Date, Date]);
     y.domain([0, d3.max(count) as number]);
 
     g.append("g")
@@ -136,8 +123,8 @@ const Candidates = () => {
 
     const line = d3
       .line<{ date: Date; count: number }>()
-      .x((d) => x(d.date) ?? 0) // Use date for x-coordinate
-      .y((d) => y(d.count) ?? 0) // Use count for y-coordinate
+      .x((d) => x(d.date) ?? 0)
+      .y((d) => y(d.count) ?? 0)
 
     g.append("path")
       .datum(data)
@@ -147,7 +134,6 @@ const Candidates = () => {
       .attr("stroke-width", 2)
       .attr("d", line);
 
-    // Add y-axis label
     g.append("text")
       .attr("class", "y axis-label")
       .attr("x", -(HEIGHT / 2))
@@ -162,21 +148,35 @@ const Candidates = () => {
     if (negativeTweets && Object.keys(negativeTweets).length > 0) {
       const values = Object.values(negativeTweets);
 
-      // Restructure data for the line chart
       const chartData = values.reduce((acc, entry) => {
         return acc.concat(
           entry.tweets.map((tweet) => ({
             date: tweet.date,
-            count: entry.count, // Keep the count as it is
-            dateInt: entry.dateInt ?? 0,
+            count: entry.count,
           }))
         );
-      }, [] as { date: Date; count: number; dateInt: number }[]);
+      }, [] as { date: Date; count: number }[]);
 
-      // Sort the chartData by date
       chartData.sort((a, b) => a.date.getTime() - b.date.getTime());
 
-      drawLineChart(chartData);
+      // Create an object to store unique dates and counts
+      const uniqueChartData: { [key: string]: { date: Date; count: number } } =
+        {};
+
+      chartData.forEach((entry) => {
+        const dateString = entry.date.toISOString().slice(0, 10);
+        uniqueChartData[dateString] = {
+          date: entry.date,
+          count: entry.count,
+        };
+      });
+
+      // Convert the object values back to an array
+      const uniqueChartDataArray = Object.values(uniqueChartData);
+
+      drawLineChart(uniqueChartDataArray);
+
+      console.log(uniqueChartData);
     }
   }, [negativeTweets]);
 
@@ -184,11 +184,8 @@ const Candidates = () => {
     return <div>Loading...</div>;
   }
 
-  console.log(negativeTweets);
-
   return (
     <div>
-      <h1>Fuckers</h1>
       <svg ref={svgRef} width={svgWidth} height={svgHeight}></svg>
     </div>
   );
