@@ -16,8 +16,6 @@ interface CoinData {
 const LineChart = () => {
   const svgRef = useRef<SVGSVGElement>(null);
   const focusRef = useRef<SVGGElement>(null);
-  const circleRef = useRef<SVGLineElement>(null);
-  const textRef = useRef<SVGTextElement>(null);
   const [tooltipData, setTooltipData] = useState<{
     display: boolean;
     x?: number;

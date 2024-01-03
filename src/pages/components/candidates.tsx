@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import * as d3 from "d3";
 
 interface TweetData {
@@ -25,6 +25,9 @@ interface TweetData {
 
 const Candidates = () => {
   const [data, setData] = useState<TweetData[]>();
+  const svgRef = useRef<SVGSVGElement>(null);
+  const svgWidth = 800;
+  const svgHeight = 600;
 
   useEffect(() => {
     d3.csv("data/twitter_data.csv").then((d) => {
@@ -54,6 +57,25 @@ const Candidates = () => {
     });
   }, []);
 
+  useEffect(() => {
+    const MARGIN = { LEFT: 20, RIGHT: 100, TOP: 50, BOTTOM: 100 };
+    const WIDTH = svgWidth - MARGIN.LEFT - MARGIN.RIGHT;
+    const HEIGHT = svgHeight - MARGIN.TOP - MARGIN.BOTTOM;
+    const svg = d3
+      .select(svgRef.current)
+      .append("svg")
+      .attr("width", svgWidth)
+      .attr("height", svgHeight);
+
+    const g = svg
+      .append("g")
+      .attr("transform", `translate(${MARGIN.LEFT}, ${MARGIN.TOP})`);
+
+    // scales
+    const x = d3.scaleTime().range([0, WIDTH]);
+    const y = d3.scaleLinear().range([HEIGHT, 0]);
+  }, [data]);
+
   if (!data) {
     return <div>Loading...</div>;
   }
@@ -63,6 +85,7 @@ const Candidates = () => {
   return (
     <div>
       <h1>Fuckers</h1>
+      <svg ref={svgRef} width={svgWidth} height={svgHeight}></svg>
     </div>
   );
 };
