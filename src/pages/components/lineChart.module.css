@@ -1,0 +1,5 @@
+.line:hover {
+  stroke: #000;
+  stroke-width: 2px;
+  stroke-opacity: 1;
+}

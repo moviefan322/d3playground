@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState } from "react";
+import styles from "./lineChart.module.css";
 import * as d3 from "d3";
 
 interface CoinList {
@@ -136,12 +137,13 @@ const LineChart = () => {
           .y((d) => (d.price_usd ? y(+d.price_usd) : 0));
 
         // Add line to chart
-        g.append("path")
+        const lineElement = g
+          .append("path")
           .attr("class", "line")
           .attr("fill", "none")
-          .attr("stroke", "grey")
+          .attr("stroke", tooltipData.display ? "green" : "grey")
           .attr("stroke-width", "3px")
-          .attr("d", line(sanitizedCoinDataArray)); // Pass sanitized data here
+          .attr("d", line(sanitizedCoinDataArray))
       }
     }
 
@@ -157,7 +159,7 @@ const LineChart = () => {
 
     focus
       .append("line")
-      .attr("class", "y-hover-line hover-line")
+      .attr("className", `y-hover-line hover-line ${styles.line}`)
       .attr("x1", 0)
       .attr("x2", WIDTH);
 
@@ -182,15 +184,15 @@ const LineChart = () => {
       .attr("height", svgHeight) // Set the overlay height to cover the entire chart
       .style("fill", "none")
       .style("pointer-events", "all") // Ensure the overlay captures mouse events
-      .on("mouseover", () => {
-        setTooltipData({ ...tooltipData, display: true });
-      })
-      .on("mouseout", () => {
-        setTooltipData({ ...tooltipData, display: false });
-      })
-      .on("mousemove", (event) => {
-        mousemove(event);
-      });
+      // .on("mouseover", () => {
+      //   setTooltipData({ ...tooltipData, display: true });
+      // })
+      // .on("mouseout", () => {
+      //   setTooltipData({ ...tooltipData, display: false });
+      // })
+      // .on("mousemove", (event) => {
+      //   mousemove(event);
+      // });
 
     // Inside the mousemove function
     // Inside the mousemove function
@@ -238,6 +240,7 @@ const LineChart = () => {
 
       return undefined;
     }
+    svg.node()?.appendChild(focusRef.current!);
   }, [bisectDate, data, tooltipData]);
 
   console.log(tooltipData);
