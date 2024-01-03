@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import * as d3 from "d3";
+import { set } from "mongoose";
 
 interface TweetData {
   content: string;
@@ -23,8 +24,13 @@ interface TweetData {
   media: string;
 }
 
+interface NegativeTweets {
+  [key: string]: TweetData[];
+}
+
 const Candidates = () => {
   const [data, setData] = useState<TweetData[]>();
+  const [negativeTweets, setNegativeTweets] = useState<NegativeTweets>();
   const svgRef = useRef<SVGSVGElement>(null);
   const svgWidth = 800;
   const svgHeight = 600;
@@ -58,54 +64,45 @@ const Candidates = () => {
   }, []);
 
   useEffect(() => {
-    const MARGIN = { LEFT: 20, RIGHT: 100, TOP: 50, BOTTOM: 100 };
-    const WIDTH = svgWidth - MARGIN.LEFT - MARGIN.RIGHT;
-    const HEIGHT = svgHeight - MARGIN.TOP - MARGIN.BOTTOM;
-    const svg = d3
-      .select(svgRef.current)
-      .append("svg")
-      .attr("width", svgWidth)
-      .attr("height", svgHeight);
+    if (data) {
+      const negativeTweetsByDate: NegativeTweets = {};
 
-    const g = svg
-      .append("g")
-      .attr("transform", `translate(${MARGIN.LEFT}, ${MARGIN.TOP})`);
-
-    // scales
-    const x = d3.scaleTime().range([0, WIDTH]);
-    const y = d3.scaleLinear().range([HEIGHT, 0]);
-
-    // axis generators
-    const xAxisCall = d3.axisBottom(x);
-    const yAxisCall = d3
-      .axisLeft(y)
-      .ticks(6)
-      .tickFormat((d) => `${+((d as any) / 1000)}k`);
-
-    // axis groups
-    const xAxis = g
-      .append("g")
-      .attr("class", "x axis")
-      .attr("transform", `translate(0, ${HEIGHT})`);
-    const yAxis = g.append("g").attr("class", "y axis");
-
-    // y-axis label
-    yAxis
-      .append("text")
-      .attr("class", "axis-title")
-      .attr("transform", "rotate(-90)")
-      .attr("y", 6)
-      .attr("dy", ".71em")
-      .style("text-anchor", "end")
-      .attr("fill", "#5D6971")
-      .text("# of tweets");
+      data.forEach((tweet) => {
+        if (tweet.negativeSentiment > 62) {
+          const tweetDate = tweet.date.toDateString();
+          if (!negativeTweetsByDate[tweetDate]) {
+            negativeTweetsByDate[tweetDate] = [];
+          }
+          negativeTweetsByDate[tweetDate].push(tweet);
+        }
+      });
+      setNegativeTweets(negativeTweetsByDate);
+    }
   }, [data]);
+
+  useEffect(() => {
+    if (negativeTweets?.length ?? 0 > 0) {
+      const MARGIN = { LEFT: 100, RIGHT: 20, TOP: 50, BOTTOM: 100 };
+      const WIDTH = svgWidth - MARGIN.LEFT - MARGIN.RIGHT;
+      const HEIGHT = svgHeight - MARGIN.TOP - MARGIN.BOTTOM;
+
+      const svg = d3
+        .select(svgRef.current)
+        .append("svg")
+        .attr("width", svgWidth)
+        .attr("height", svgHeight);
+
+      const g = svg
+        .append("g")
+        .attr("transform", `translate(${MARGIN.LEFT}, ${MARGIN.TOP})`);
+    }
+  }, [negativeTweets]);
 
   if (!data) {
     return <div>Loading...</div>;
   }
 
-  console.log(data);
+  console.log(negativeTweets);
 
   return (
     <div>
